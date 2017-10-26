@@ -36,3 +36,10 @@ if __name__ == "__main__":
 
 Released under Simplified BSD License.
 Copyright (c) 2014, Samsung Electronics Co.,Ltd.
+
+# 补充
+站在巨人的肩膀上，修改了一下头文件的定义使其支持windows，（Cython不支持在if下cdef，所以改了之后没法再支持linux了），当然epoll没法用了。需要把udt放在include目录下，然后执行
+```
+python3 setup.py build
+```
+然后build目录下就会有pyd文件了，拷贝时不要忘了udt.dll文件。

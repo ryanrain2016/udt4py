@@ -36,8 +36,9 @@ libudt4 is (c)2001 - 2011, The Board of Trustees of the University of Illinois.
 libudt4 URL:            http://udt.sourceforge.net/
 """
 
+#pragma comment(lib, "ws2_32.lib")
 
-import os
+import os, sys
 
 from libc.string cimport memset
 from libc.stdint cimport int64_t, uint64_t, int32_t, uint32_t, uint16_t, \
@@ -53,8 +54,7 @@ cdef extern from "Python.h":
     char* PyByteArray_AsString(object bytearray) except NULL
     Py_buffer *PyMemoryView_GET_BUFFER(object mview) except NULL
 
-
-cdef extern from "sys/socket.h":
+cdef extern from "winsock2.h":
     struct sockaddr:
         pass
 
@@ -64,7 +64,7 @@ cdef extern from "sys/socket.h":
     int SOCK_STREAM
 
 
-cdef extern from "netinet/in.h":
+#cdef extern from "netinet/in.h":
     struct in_addr:
         uint32_t s_addr
 
@@ -72,6 +72,7 @@ cdef extern from "netinet/in.h":
         unsigned short int sin_family
         uint16_t sin_port
         in_addr sin_addr
+        unsigned int sin_zero[8]
 
     uint16_t htons(uint16_t)
     uint16_t ntohs(uint16_t)
@@ -79,11 +80,10 @@ cdef extern from "netinet/in.h":
     int AF_INET6
     int AF_INET
 
-
-cdef extern from "arpa/inet.h":
-    int inet_aton(const char *, in_addr *)
+#cdef extern from "arpa/inet.h":
+cdef extern from "WS2tcpip.h":
+    int inet_pton(int af, const char *, in_addr *)
     char *inet_ntoa(in_addr)
-
 
 cdef extern from "udt/udt.h":
     ctypedef int SYSSOCKET
@@ -411,7 +411,7 @@ cdef sockaddr_in str_to_sockaddr_in(str addr, unsigned short int family):
     memset(&addrv4, 0, sizeof(sockaddr_in))
     addrv4.sin_family = family
     addrv4.sin_port = htons(int(str_port))
-    if inet_aton(str_host, &addrv4.sin_addr) == 0:
+    if inet_pton(AF_INET, str_host, &addrv4.sin_addr) == 0:
         raise ValueError("Could not parse IPv4 address \"%s\"" % str_host)
     return addrv4
 
@@ -422,7 +422,7 @@ cdef sockaddr_in tuple_to_sockaddr_in(addr, unsigned short int family):
     memset(&addrv4, 0, sizeof(sockaddr_in))
     addrv4.sin_family = family
     addrv4.sin_port = htons(port)
-    if inet_aton(host, &addrv4.sin_addr) == 0:
+    if inet_pton(AF_INET, host, &addrv4.sin_addr) == 0:
         raise ValueError("Could not parse IPv4 address \"%s\"" % host)
     return addrv4
 
